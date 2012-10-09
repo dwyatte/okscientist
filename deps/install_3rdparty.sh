@@ -1,0 +1,2 @@
+sudo easy_install gensim
+sudo eash_install networkx
