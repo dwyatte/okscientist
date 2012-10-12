@@ -1,3 +1,7 @@
+import itertools
+import scipy.spatial.distance as distance
+import numpy 
+
 '''Update the vocab with words (usually extracted from a pdf), and return new vocab.
 	assumes words have been filtered according to a blacklist of common words and
 	all punctuation and case has already been removed'''
@@ -14,17 +18,27 @@ def BuildFeatures(words, vocab):
 	features = dict.fromkeys(vocab, 0)
 	for word in words:
 		features[word] +=1
-	return features
+	return features.values()
 	
 	
 if __name__ == '__main__':
-	words1 = ['everything', 'was', 'beautiful', 'and', 'nothing', 'hurt']
 	vocab = []	
-	vocab = UpdateVocab(words1, vocab)	
+
+	doc1 = ['everything', 'was', 'beautiful', 'and', 'nothing', 'hurt']
+	vocab = UpdateVocab(doc1, vocab)	
 	
-	words2 = ['and', 'so', 'it', 'goes']
-	vocab = UpdateVocab(words2, vocab)	
+	doc2 = ['and', 'so', 'it', 'goes']
+	vocab = UpdateVocab(doc2, vocab)
 	
-	features = BuildFeatures(words2, vocab)
-	print features
-	print features.values()
+	doc3 = ['everything', 'and', 'nothing']
+	vocab = UpdateVocab(doc2, vocab)
+	
+	features = []
+	doclist = [doc1, doc2, doc3]
+	for doc in doclist:
+		features.append(BuildFeatures(doc, vocab))
+		
+	distances = distance.pdist(features, 'cosine')
+	distances = distance.squareform(distances)
+	
+	print distances
