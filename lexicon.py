@@ -22,21 +22,25 @@ def BuildFeatures(words, vocab):
 	
 	
 if __name__ == '__main__':
-	vocab = []	
 
 	doc1 = ['everything', 'was', 'beautiful', 'and', 'nothing', 'hurt']
-	vocab = UpdateVocab(doc1, vocab)	
-	
 	doc2 = ['and', 'so', 'it', 'goes']
-	vocab = UpdateVocab(doc2, vocab)
-	
 	doc3 = ['everything', 'and', 'nothing']
-	vocab = UpdateVocab(doc2, vocab)
-	
-	features = []
 	doclist = [doc1, doc2, doc3]
+	
+	# build the vocab over all docs
+	vocab = []	
 	for doc in doclist:
-		features.append(BuildFeatures(doc, vocab))
+		vocab = UpdateVocab(doc, vocab)	
+	
+	# compute features
+	features = []
+	for doc in doclist:
+		f = BuildFeatures(doc, vocab)
+		f = numpy.array(f)
+		# normalize
+		f = (f-numpy.min(f))/(numpy.max(f)-numpy.min(f))
+		features.append(f)
 		
 	distances = distance.pdist(features, 'cosine')
 	distances = distance.squareform(distances)
