@@ -10,28 +10,30 @@ def LoadStoplist(stopfile):
          return f.read().split()
 
 
-'''Update the vocab with words (usually extracted from a pdf), and return new vocab.
-	assumes words have been filtered according to a blacklist of common words and
-	all punctuation and case has already been removed '''
-def UpdateVocab(words, stoplist, vocab):
+''' Update the vocab with words (usually extracted from a pdf), and return new vocab '''
+def UpdateVocab(words, vocab):
 	for word in words:
-		if word not in vocab and word not in stoplist:
+		if word not in vocab:
 			vocab.append(word)
 	return vocab
 
 
 ''' dump contents of pdf at path using the binary pdftotext (assume binary is in path). '''
-def DumpPDF(path, filterjunk=True):
+def DumpPDF(path, filterjunk, stoplist):
     # third arg ('-') denotes that we are dumping the text to stdout, so we need to redirect
     pdftotextProc = subprocess.Popen(['pdftotext', path, '-'], stdout=subprocess.PIPE)        
     (stdoutdata, sterrdata) = pdftotextProc.communicate()
     stdoutdata = stdoutdata.lower().split()
     
+    # do some basic filtering -- only return words that are all letters with length > 1
     if filterjunk:
-        # do some basic filtering -- only return words that are all letters with length > 1
-        return [x for x in stdoutdata if x.isalpha() and len(x) > 1]
-    else:
-        return stdoutdata
+        stdoutdata = [x for x in stdoutdata if x.isalpha() and len(x) > 1]
+    
+    # do more specific filtering according to stoplist
+    if len(stoplist) > 0:
+        stdoutdata = [x for x in stdoutdata if x not in stoplist]
+    
+    return stdoutdata
 
 	
 ''' Find all PDFs from root dir, return list of paths '''
