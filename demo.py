@@ -1,6 +1,5 @@
 import nlpfuns
-import sys, os
-import networkx
+import sys, os, subprocess
 import numpy
 import scipy.spatial.distance as distance
 import numpy.linalg as linalg
@@ -14,15 +13,17 @@ import matplotlib.pyplot as plot
 
 if __name__ == '__main__':
     vocab = []
-    stoplist = nlpfuns.LoadStoplist('english.stop')
+    stoplist = nlpfuns.ReadFlatText('stoplist.dat')
     
     # if we are on a mac, we can use the supplied pdftotext binary
     if sys.platform == 'darwin':
         os.environ['PATH'] = 'bin:' + os.environ['PATH']
         
+    # now make sure it is in our path -- TODO, else error
+        
     # gather up our docs from the test directory
-    #docs = nlpfuns.FindPDFs('test')
-    docs = nlpfuns.FindPDFs('/Users/dwyatte/Documents/Papers/2010/')
+    docs = nlpfuns.FindPDFs('test')
+    #docs = nlpfuns.FindPDFs('/Users/dwyatte/Documents/Papers/')
         
     # dump text and build vocab
     print 'Building vocabulary (could take awhile)...'
@@ -45,6 +46,5 @@ if __name__ == '__main__':
     distances = distance.pdist(features, 'cosine')
     distances = distance.squareform(distances)
     
-    plot.Figure()
-    plot.imshow(distances)
-    plot.show()
+    nlpfuns.WriteFlatText('vocab.dat', vocab)
+    nlpfuns.WriteGraphPajek('distances.net', docs, 1-distances)

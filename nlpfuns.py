@@ -2,14 +2,31 @@
     parsing pdfs, building the vocabulary, features, etc. '''
 
 import subprocess, os, fnmatch
+import numpy
 
-
-''' Loads and returns stoplist '''
-def LoadStoplist(stopfile):
-    with open(stopfile, 'r') as f:
-         return f.read().split()
-
-
+''' Loads and returns flat text file from disk, split by newlines '''
+def ReadFlatText(file):
+    with open(file, 'r') as f:
+         return f.read().split()        
+         
+''' Writes list to disk (flat text, one word per line) '''
+def WriteFlatText(file, list):
+    with open(file, 'w') as f:
+        [f.write(x + '\n') for x in list]
+        
+''' Writes out graph in pajek format. Uses distances as edge weights, which should
+    be symmetrical, so just write upper write triangle of matrix. Requires nupmy '''
+def WriteGraphPajek(netfile, labels, weights):
+    with open(netfile, 'w') as f:
+        f.write('*vertices ' + str(len(labels)) + '\n')
+        for nodeid,label in enumerate(labels):
+            f.write(str(nodeid) + '\t' + '\"' + label + '\"\n')
+        
+        f.write('*arcs\n')    
+        for l1idx in range(0, len(labels)):
+            for l2idx in range(l1idx+1, len(labels)):
+                f.write(str(l1idx) +  '\t' + str(l2idx) + '\t' + str(weights[l1idx, l2idx]) + '\n')
+            
 ''' Update the vocab with words (usually extracted from a pdf), and return new vocab '''
 def UpdateVocab(words, vocab):
 	for word in words:
