@@ -1,13 +1,17 @@
 import nlpfuns
-import sys, os, subprocess
+import sys, os
 import numpy
 import scipy.spatial.distance as distance
 import matplotlib.pyplot as plot
 
+###########################################
+# TODO: implement TD-IDF features instead
+###########################################
+
 # various flags/parameters
 DOC_ROOT = '/Users/dwyatte/Documents/Papers/'   # where to search for PDFs
-BUILD_VOCAB = 0                                 # whether to build vocab (slow) or read from disk
-VOCAB_FILE = 'vocab.dat'                        # vocab file to read from/write to disk
+BUILD_VOCAB = 1                                 # whether to build vocab (slow) or read from disk
+VOCAB_FILE = 'vocab.json'                       # vocab file to read from/write to disk
 WEIGHT_THRESH = 0.5                             # threshold for writing out an edge in output function
 
 if __name__ == '__main__':
@@ -22,8 +26,8 @@ if __name__ == '__main__':
         
         
     if BUILD_VOCAB:
-        vocab = []
-        stoplist = nlpfuns.ReadFlatText('stoplist.dat')    
+        vocab = {}
+        stoplist = nlpfuns.ReadFlatText('stoplist.txt')    
         print '\nBuilding vocabulary (could take awhile)...\n'
         for i,doc in enumerate(docs, start=1):
             print 'Adding text from %s (%d/%d)' % (doc, i, len(docs))
@@ -34,11 +38,11 @@ if __name__ == '__main__':
             else:
                 print '|---> Could not dump text from this paper, skipping\n'
                 continue
-        nlpfuns.WriteFlatText(VOCAB_FILE, vocab)
+        nlpfuns.WriteJSON(VOCAB_FILE, vocab)
     else:
         print '\nReading existing vocabulary from %s\n' % (VOCAB_FILE)
-        vocab = nlpfuns.ReadFlatText(VOCAB_FILE)
-        stoplist = nlpfuns.ReadFlatText('stoplist.dat')    
+        vocab = nlpfuns.ReadJSON(VOCAB_FILE)
+        stoplist = nlpfuns.ReadFlatText('stoplist.txt')    
  
     
     # compute features, node labels
@@ -54,10 +58,8 @@ if __name__ == '__main__':
         else:
             print '|---> Could not dump text from this paper, skipping\n'
             continue
-        f = nlpfuns.BuildFeatures(doctext, vocab)
-        f = numpy.array(f)
-        # normalize
-        f = (f-numpy.min(f)/(numpy.max(f)-numpy.min(f)))
+        f = nlpfuns.ComputeFreqFeatures(doctext, vocab)
+
         features.append(f)
         labels.append(doc.split(os.sep)[-1])      
         	    

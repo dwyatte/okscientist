@@ -1,50 +1,48 @@
 ''' Various natural language processing and utility functions -- 
     parsing pdfs, building the vocabulary, features, etc. '''
 
-import subprocess, os, fnmatch
+import subprocess, os, fnmatch, json
+import numpy
 
+##########################################################################################
+# Basic file I/O (text reading/writing, json reading/writing)
+##########################################################################################
 
-''' Loads and returns flat text file from disk, split by newlines '''
+''' Reads flat text file from disk, split by newlines, returns as list '''
 def ReadFlatText(file):
     with open(file, 'r') as f:
          return f.read().split()        
-       
-         
-''' Writes list to disk (flat text, one word per line) '''
-def WriteFlatText(file, list):
+              
+''' Writes keys part of dictionary to disk (one word per line ignoring values) '''
+def WriteFlatText(file, dict):
     with open(file, 'w') as f:
-        [f.write(x + '\n') for x in list]
+        [f.write(x + '\n') for x in dict.keys()]
     return True
-       
-        
-''' Writes out graph in pajek format. Uses similarities as edge weights, which should
-    be symmetrical, so just write upper right triangle of matrix. Note that weights is a 
-    numpy array. thresh is a threshold that weight must surpass to get written as an edge '''
-def WriteGraphPajek(netfile, labels, weights, thresh=0.0):
-    with open(netfile, 'w') as f:
-        # write node ids
-        f.write('*vertices ' + str(len(labels)) + '\n')
-        for nodeid,label in enumerate(labels, start=1):
-            f.write(str(nodeid) + ' ' + '\"' + label + '\"\n')
-
-        # write the weights
-        f.write('*Edges\n')    
-        for l1idx in range(0, len(labels)):
-            for l2idx in range(l1idx+1, len(labels)):
-                if weights[l1idx, l2idx] > thresh:
-                    f.write(str(l1idx+1) +  ' ' + str(l2idx+1) + ' ' + str(weights[l1idx, l2idx]) + '\n')
-  
+    
+''' Writes dictionary to disk in JSON format '''
+def WriteJSON(file, dict):
+    with open(file, 'wb') as f:
+        json.dump(dict, f)
     return True
-            
-            
-''' Update the vocab with words (usually extracted from a pdf), and return new vocab '''
-def UpdateVocab(words, vocab):
-	for word in words:
-		if word not in vocab:
-			vocab.append(word)
-	
-	return vocab
+    
+''' Reads dictionary from disk in JSON format and returns it '''
+def ReadJSON(file):
+    with open(file, 'rb') as f:
+        d = json.load(f)
+    return d
+    
 
+##########################################################################################
+# Parsing functions (PDFs, etc.)
+##########################################################################################
+
+''' Find all PDFs from root dir, return list of paths '''
+def FindPDFs(root):
+    paths = []    
+    for dirpath, dirnames, filenames in os.walk(root):
+        for filename in fnmatch.filter(filenames, '*.pdf'):
+            paths.append(os.path.join(dirpath, filename))  
+    return paths 
 
 ''' dump contents of pdf at path using the binary pdftotext (assume binary is in path). '''
 def DumpPDF(path, filterjunk, stoplist):
@@ -55,32 +53,62 @@ def DumpPDF(path, filterjunk, stoplist):
     
     # do some basic filtering -- only return words that are all letters with length > 1
     if filterjunk:
-        stdoutdata = [x for x in stdoutdata if x.isalpha() and len(x) > 1]
-    
+        stdoutdata = [x for x in stdoutdata if x.isalpha() and len(x) > 1]    
     # do more specific filtering according to stoplist
     if len(stoplist) > 0:
         stdoutdata = [x for x in stdoutdata if x not in stoplist]
     
     return stdoutdata
-
-	
-''' Find all PDFs from root dir, return list of paths '''
-def FindPDFs(root):
-    paths = []
     
-    for dirpath, dirnames, filenames in os.walk(root):
-        for filename in fnmatch.filter(filenames, '*.pdf'):
-            paths.append(os.path.join(dirpath, filename))  
-    
-    return paths 
+        
+##########################################################################################
+# Graph file I/O (Pajek format, etc.)
+##########################################################################################
+        
+''' Writes out graph in pajek format. Uses similarities as edge weights, which should
+    be symmetrical, so just write upper right triangle of matrix. Weights is a numpy
+    array. Thresh is a threshold that weight must surpass to get written as an edge '''
+def WriteGraphPajek(netfile, labels, weights, thresh=0.0):
+    with open(netfile, 'w') as f:
+        # write node ids
+        f.write('*Vertices ' + str(len(labels)) + '\n')
+        for nodeid,label in enumerate(labels, start=1):
+            f.write(str(nodeid) + ' ' + '\"' + label + '\"\n')
+
+        # write the weights
+        f.write('*Edges\n')    
+        for l1idx in range(0, len(labels)):
+            for l2idx in range(l1idx+1, len(labels)):
+                if weights[l1idx, l2idx] > thresh:
+                    f.write(str(l1idx+1) +  ' ' + str(l2idx+1) + ' ' + str(weights[l1idx, l2idx]) + '\n')
+    return True
+            
+            
+##########################################################################################
+# NLP logic such as vocabulary building, feature computation, etc.
+##########################################################################################
+
+''' Update the vocab with words (usually extracted from a pdf), and return new vocab '''
+def UpdateVocab(words, vocab):
+    for word in words:
+        if word in vocab:
+            vocab[word] += 1	
+        else:
+            vocab[word] = 0	
+    return vocab
 
 
-''' Build a feature vector from a list of words (usually extracted from a pdf), according
+''' Build a word freq feature vector from a list of words (usually extracted from a pdf), according
 	to the overall vocabulary '''
-def BuildFeatures(words, vocab):
-	features = dict.fromkeys(vocab, 0)
-	for word in words:
-	    if word in vocab:
-    		features[word] +=1
-	
-	return features.values()
+def ComputeFreqFeatures(words, vocab):
+    freqs = dict.fromkeys(vocab, 0)
+    for word in words:
+        if word in vocab:
+            freqs[word] +=1
+            
+    # put into numpy array to allow math
+    f = numpy.array(freqs.values())
+    # convert to frequencies
+    f = f/float(numpy.sum(f))
+    
+    return f
