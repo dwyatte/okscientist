@@ -3,12 +3,9 @@ import sys, os
 import numpy
 import scipy.spatial.distance as distance
 
-##########################################################################################
-# TODO: implement TD-IDF features
-##########################################################################################
 
 # various flags/parameters
-DOC_ROOT = 'allpdfs/'                           # where to search for PDFs
+DOC_ROOT = 'allpdfs/'                          # where to search for PDFs
 BUILD_VOCAB = False                             # whether to build vocab (slow) or read from disk
 VOCAB_FILE = 'vocab.json'                       # vocab file to read from/write to disk
 STOP_FILE = 'stoplist.txt'                      # stop list file (found online)
@@ -62,8 +59,13 @@ if __name__ == '__main__':
 
         docname = doc.split(os.sep)[-1]
         features[docname] = nlpfuns.ComputeFreqFeatures(doctext, vocab)
-        	    
+    
+    # convert features to tf-idf and compute distance
+    print '\nComputing TF-IDF features and inter-document distance...'
+    features = nlpfuns.ComputeTFIDFFeatures(features, vocab)            	    
     distances = distance.pdist(features.values(), 'cosine')
     distances = distance.squareform(distances)
     
+    print 'Writing Pajek graph file...'
     nlpfuns.WriteGraphPajek('graph.net', features.keys(), 1-distances, WEIGHT_THRESH)
+    print 'Done'

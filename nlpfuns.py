@@ -83,12 +83,27 @@ def ComputeFreqFeatures(words, vocab):
             freqs[word] +=1
             
     # put into numpy array to allow math
-    f = numpy.array(freqs.values())
+    fvals = numpy.array(freqs.values())
     # convert to frequencies
-    f = f/float(numpy.sum(f))
+    fvals = fvals/float(numpy.max(fvals))
     # return back as a python native list
-    return f.tolist()
+    return fvals.tolist()
 
+''' Compute TF-IDF features from all frequency features. freqs and vocab are dicts '''
+def ComputeTFIDFFeatures(freqs, vocab):
+    # compute inverse document frequency
+    IDF = {}
+    # cast to array so we can do vector summation
+    fvals = numpy.array(freqs.values())
+    for widx,word in enumerate(vocab, start=0):
+        IDF[word] = numpy.log2(fvals.shape[0] / float(1+numpy.count_nonzero(fvals[:,widx])))
+
+    # now do TF * IDF
+    TF_IDF = {}
+    for doc in freqs:
+        TF_IDF[doc] = numpy.multiply(freqs[doc], IDF.values())
+    return TF_IDF
+        
 
 ##########################################################################################
 # Graph file I/O (Pajek format, etc.)
