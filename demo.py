@@ -16,8 +16,9 @@ BUILD_VOCAB = False                             # whether to build vocab (slow) 
 VOCAB_FILE = 'vocab.json'                       # vocab file to read from/write to disk
 COMPUTE_FEATURES = False                        # whether to compute features (slow) or read from disk
 FEATURES_FILE = 'features.mtx'                  # features file to read from/write to disk
+N_REDUCE_FEATURES = 100                         # dimensionality of reduced features
 STOP_FILE = 'stoplist.txt'                      # stop list file (found online)
-WEIGHT_THRESH = 0.5                             # threshold for writing out an edge in output function
+WEIGHT_THRESH = 0.75                            # threshold for writing out an edge in output function
 
 if __name__ == '__main__':
 
@@ -73,8 +74,11 @@ if __name__ == '__main__':
         print 'Loading existing features from %s\n' % (FEATURES_FILE)
         features = nlpfuns.ReadMTX(FEATURES_FILE)        
     
+    print 'Reducing features'
+    features = nlpfuns.ReduceFeatures(features, N_REDUCE_FEATURES)
+    
     print 'Computing inter-document distance...'
-    distances = distance.pdist(features.todense(), 'cosine')
+    distances = distance.pdist(features, 'cosine')
     distances = distance.squareform(distances)
     
     print 'Writing Pajek graph file...'

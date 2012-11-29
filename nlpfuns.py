@@ -4,6 +4,7 @@
 import subprocess, os, fnmatch, json
 import scipy.io as io
 import scipy.sparse as sparse
+import scipy.sparse.linalg as linalg
 import numpy
 
 ##########################################################################################
@@ -112,7 +113,11 @@ def ComputeTFIDFFeatures(freqs, vocab):
         # have to convert sparse array out to dense array for element-wise multiplication (boo...)
         TF_IDF[didx,:] = numpy.multiply(freqs[didx,:].todense(), IDF)
     return TF_IDF
-        
+
+''' Reduce features with dimensionality reduction. Currently only SVD is supported for efficiency '''
+def ReduceFeatures(features, dimensions):
+    [U, S, V] = linalg.svds(features, dimensions)
+    return U*S
 
 ##########################################################################################
 # Graph file I/O (Pajek format, etc.)

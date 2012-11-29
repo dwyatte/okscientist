@@ -6,7 +6,7 @@ cd deps
 ./install_superpack.sh
 cd ..
 
-2.) Install other third party deps (gensim, networkx):
+2.) Install other third party deps (gensim, etc.):
 cd deps
 ./install_3rdparty.sh
 cd ..
