@@ -8,7 +8,7 @@ import scipy.sparse.linalg as linalg
 import numpy
 
 ##########################################################################################
-# Basic file I/O (text reading/writing, json reading/writing)
+# Basic file I/O (text reading/writing, json reading/writing, matrix market, etc.)
 ##########################################################################################
 
 ''' Reads flat text file from disk, split by newlines, returns as list '''
