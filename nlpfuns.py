@@ -2,6 +2,8 @@
     parsing pdfs, building the vocabulary, features, etc. '''
 
 import subprocess, os, fnmatch, json
+import scipy.io as io
+import scipy.sparse as sparse
 import numpy
 
 ##########################################################################################
@@ -28,9 +30,18 @@ def WriteJSON(file, dict):
 ''' Reads dictionary from disk in JSON format and returns it '''
 def ReadJSON(file):
     with open(file, 'rb') as f:
-        d = json.load(f)
-    return d
+        return json.load(f)
+
+''' Write data in matrix market format '''
+def WriteMTX(file, matrix):
+    with open(file, 'wb') as f:
+        io.mmwrite(f, matrix)
+    return True
     
+    ''' Write data in matrix market format '''
+def ReadMTX(file):
+    with open(file, 'rb') as f:
+        return io.mmread(f)
 
 ##########################################################################################
 # Scraping/parsing functions (PDFs, etc.)
@@ -85,23 +96,21 @@ def ComputeFreqFeatures(words, vocab):
     # put into numpy array to allow math
     fvals = numpy.array(freqs.values())
     # convert to frequencies
-    fvals = fvals/float(numpy.max(fvals))
-    # return back as a python native list
-    return fvals.tolist()
+    return fvals/float(numpy.max(fvals))
 
-''' Compute TF-IDF features from all frequency features. freqs and vocab are dicts '''
+''' Compute TF-IDF features from all frequency features. freqs is a sparse matrix and vocab is a dict 
+    All math in this function is done on numpy arrays (sparse when possible) for efficiency reasons (no dicts) '''
 def ComputeTFIDFFeatures(freqs, vocab):
     # compute inverse document frequency
-    IDF = {}
-    # cast to array so we can do vector summation
-    fvals = numpy.array(freqs.values())
-    for widx,word in enumerate(vocab, start=0):
-        IDF[word] = numpy.log2(fvals.shape[0] / float(1+numpy.count_nonzero(fvals[:,widx])))
+    IDF = numpy.zeros(len(vocab))
+    for widx in range(0, len(vocab)):
+        IDF[widx] = numpy.log2(freqs.shape[0] / float(1+len(freqs[:,widx].nonzero())))
 
     # now do TF * IDF
-    TF_IDF = {}
-    for doc in freqs:
-        TF_IDF[doc] = numpy.multiply(freqs[doc], IDF.values())
+    TF_IDF = sparse.lil_matrix(freqs.shape)
+    for didx in range(0, freqs.shape[0]):
+        # have to convert sparse array out to dense array for element-wise multiplication (boo...)
+        TF_IDF[didx,:] = numpy.multiply(freqs[didx,:].todense(), IDF)
     return TF_IDF
         
 
