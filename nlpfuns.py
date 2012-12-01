@@ -120,13 +120,22 @@ def ReduceFeatures(features, dimensions):
     return U*S
 
 ##########################################################################################
-# Graph file I/O (Pajek format, etc.)
+# Graph logic (Pajek output, etc.)
 ##########################################################################################
-        
+
+''' Find k nearest neighbor nodes given a weight matrix (i.e., similarities) and a node/nodelist.
+    Should probably assert that k <= # of papers '''
+def FindKNNNodes(k, node, nodelist, weights):
+    # find the node index from the list of nodes
+    nidx = nodelist.index(node)
+    # now sort the weights and used the sorted indices to get the nearest k nodes and their weights
+    weightssortidxs = numpy.argsort(1-weights[nidx]) # 1-weights to turn them into distances
+    return numpy.array(nodelist)[weightssortidxs[1:1+k]] # start at 1 because 0 will always be same paper (most similar to self)
+
 ''' Writes out graph in pajek format. Uses similarities as edge weights, which should
     be symmetrical, so just write upper right triangle of matrix. Weights is a numpy
     array. Thresh is a threshold that weight must surpass to get written as an edge '''
-def WriteGraphPajek(netfile, nodes, weights, thresh=0.0):
+def WriteGraphPajekThresh(netfile, nodes, weights, thresh=0.0):
     with open(netfile, 'w') as f:
         # write node ids
         f.write('*Vertices ' + str(len(nodes)) + '\n')
@@ -139,4 +148,20 @@ def WriteGraphPajek(netfile, nodes, weights, thresh=0.0):
             for l2idx in range(l1idx+1, len(nodes)):
                 if weights[l1idx, l2idx] > thresh:
                     f.write(str(l1idx+1) +  ' ' + str(l2idx+1) + ' ' + str(weights[l1idx, l2idx]) + '\n')
+    return True
+
+''' Writes out graph in pajek format but using knn documents instead '''
+def WriteGraphPajekKNN(netfile, nodes, weights, k):
+    with open(netfile, 'w') as f:
+        # write node ids
+        f.write('*Vertices ' + str(len(nodes)) + '\n')
+        for nodeid,nodelabel in enumerate(nodes, start=1):
+            f.write(str(nodeid) + ' ' + '\"' + nodelabel + '\"\n')
+
+        # write the weights
+        f.write('*Edges\n')    
+        for l1idx in range(0, len(nodes)):
+            knodes = FindKNNNodes(k, nodes[l1idx], nodes, weights)            
+            for knode in knodes:
+                f.write(str(l1idx+1) +  ' ' + str(nodes.index(knode)+1) + ' ' + str(weights[l1idx,nodes.index(knode)]) + '\n')
     return True
