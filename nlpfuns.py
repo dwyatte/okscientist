@@ -14,7 +14,7 @@ import numpy
 ''' Reads flat text file from disk, split by newlines, returns as list '''
 def ReadFlatText(file):
     with open(file, 'r') as f:
-         return f.readlines()
+         return f.read().splitlines()
               
 ''' Writes list to disk (one word per line) '''
 def WriteFlatText(file, elements):
