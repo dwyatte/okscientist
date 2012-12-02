@@ -16,10 +16,10 @@ def ReadFlatText(file):
     with open(file, 'r') as f:
          return f.read().split()        
               
-''' Writes keys part of dictionary to disk (one word per line ignoring values) '''
-def WriteFlatText(file, dict):
-    with open(file, 'w') as f:
-        [f.write(x + '\n') for x in dict.keys()]
+''' Writes list to disk (one word per line) '''
+def WriteFlatText(file, elements):
+    with open(file, 'w') as f:       
+        [f.write(x + '\n') for x in elements]
     return True
     
 ''' Writes dictionary to disk in JSON format '''
@@ -71,7 +71,6 @@ def DumpPDF(path, filterjunk, stoplist):
         stdoutdata = [x for x in stdoutdata if x not in stoplist]
     
     return stdoutdata
-    
         
 ##########################################################################################
 # NLP logic such as vocabulary building, feature computation, etc.
@@ -139,7 +138,7 @@ def WriteGraphPajekThresh(netfile, nodes, weights, thresh=0.0):
     with open(netfile, 'w') as f:
         # write node ids
         f.write('*Vertices ' + str(len(nodes)) + '\n')
-        for nodeid,nodelabel in enumerate(nodes, start=1):
+        for nodeid,nodelabel in zip(nodes, range(1,len(nodes))):
             f.write(str(nodeid) + ' ' + '\"' + nodelabel + '\"\n')
 
         # write the weights
@@ -155,7 +154,7 @@ def WriteGraphPajekKNN(netfile, nodes, weights, k):
     with open(netfile, 'w') as f:
         # write node ids
         f.write('*Vertices ' + str(len(nodes)) + '\n')
-        for nodeid,nodelabel in enumerate(nodes, start=1):
+        for nodeid,nodelabel in zip(nodes, range(1,len(nodes))):
             f.write(str(nodeid) + ' ' + '\"' + nodelabel + '\"\n')
 
         # write the weights
