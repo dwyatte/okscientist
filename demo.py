@@ -18,8 +18,8 @@ import scipy.spatial.distance as distance
 
 
 # various flags/parameters
-LOAD_VOCAB = False                                       # whether to build vocab (slow) or read from disk
-LOAD_FEATURES = False                                    # whether to compute features (slow) or read from disk
+LOAD_VOCAB = True                                       # whether to build vocab (slow) or read from disk
+LOAD_FEATURES = True                                    # whether to compute features (slow) or read from disk
 
 PDF_ROOT = 'allpdfs'                                    # where to search for PDFs
 STOP_FILE = 'stoplist.txt'                              # http://jmlr.csail.mit.edu/papers/volume5/lewis04a/a11-smart-stop-list/english.stop

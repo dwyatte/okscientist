@@ -14,7 +14,7 @@ import numpy
 ''' Reads flat text file from disk, split by newlines, returns as list '''
 def ReadFlatText(file):
     with open(file, 'r') as f:
-         return f.read().split()        
+         return f.readlines()
               
 ''' Writes list to disk (one word per line) '''
 def WriteFlatText(file, elements):
@@ -138,12 +138,12 @@ def WriteGraphPajekThresh(netfile, nodes, weights, thresh=0.0):
     with open(netfile, 'w') as f:
         # write node ids
         f.write('*Vertices ' + str(len(nodes)) + '\n')
-        for nodeid,nodelabel in zip(nodes, range(1,len(nodes))):
-            f.write(str(nodeid) + ' ' + '\"' + nodelabel + '\"\n')
+        for nodelabel,nodeid in zip(nodes, range(len(nodes))):
+            f.write(str(nodeid+1) + ' ' + '\"' + nodelabel + '\"\n')
 
         # write the weights
         f.write('*Edges\n')    
-        for l1idx in range(0, len(nodes)):
+        for l1idx in range(len(nodes)):
             for l2idx in range(l1idx+1, len(nodes)):
                 if weights[l1idx, l2idx] > thresh:
                     f.write(str(l1idx+1) +  ' ' + str(l2idx+1) + ' ' + str(weights[l1idx, l2idx]) + '\n')
@@ -154,12 +154,12 @@ def WriteGraphPajekKNN(netfile, nodes, weights, k):
     with open(netfile, 'w') as f:
         # write node ids
         f.write('*Vertices ' + str(len(nodes)) + '\n')
-        for nodeid,nodelabel in zip(nodes, range(1,len(nodes))):
-            f.write(str(nodeid) + ' ' + '\"' + nodelabel + '\"\n')
+        for nodelabel,nodeid in zip(nodes, range(len(nodes))):
+            f.write(str(nodeid+1) + ' ' + '\"' + nodelabel + '\"\n')
 
         # write the weights
         f.write('*Edges\n')    
-        for l1idx in range(0, len(nodes)):
+        for l1idx in range(len(nodes)):
             knodes = FindKNNNodes(k, nodes[l1idx], nodes, weights)            
             for knode in knodes:
                 f.write(str(l1idx+1) +  ' ' + str(nodes.index(knode)+1) + ' ' + str(weights[l1idx,nodes.index(knode)]) + '\n')
