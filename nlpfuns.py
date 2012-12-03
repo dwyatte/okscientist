@@ -115,6 +115,7 @@ def ComputeTFIDFFeatures(freqs, vocab):
 
 ''' Reduce features with dimensionality reduction. Currently only SVD is supported for efficiency '''
 def ReduceFeatures(features, dimensions):
+    assert dimensions < features.shape[0], 'Reduced feature dimensionality must be less than #observations'
     [U, S, V] = linalg.svds(features, dimensions)
     return U*S
 
@@ -137,6 +138,8 @@ def CreateGraphThresh(nodes, weights, thresh=0.0):
 ''' Create a graph, which is just a dict of dicts of the form {node_i : {node_j1: weight_j1; node_j2: weight_j2; ...}}
     k specifies value to use in a knn search over similarities '''
 def CreateGraphKNN(nodes, weights, k):
+    assert k < len(nodes), 'k must be less than #nodes-1'
+    
     graph = {}
     for sndnodeid in range(len(nodes)):
         rcvdict = {}
@@ -171,4 +174,4 @@ def WriteGraphPajek(netfile, graph, nodelabels):
             for rcvnodeid in graph[sndnodeid].keys():
                 # need to cast to int, make 1-based and cast back to str
                 f.write(str(int(sndnodeid)+1) + ' ' + str(int(rcvnodeid)+1) + ' ' + str(graph[sndnodeid][rcvnodeid]) + '\n')
-        return True
+    return True

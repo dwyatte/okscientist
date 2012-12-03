@@ -6,20 +6,20 @@ import scipy.spatial.distance as distance
 
 # TODO: try gensim version
 
-# various flags/parameters
+# flags
 LOAD_VOCAB = True                                       # whether to build vocab (slow) or read from disk
 LOAD_FEATURES = True                                    # whether to compute features (slow) or read from disk
-
+# parameters
 PDF_ROOT = 'allpdfs'                                    # where to search for PDFs
 STOP_FILE = 'stoplist.txt'                              # http://jmlr.csail.mit.edu/papers/volume5/lewis04a/a11-smart-stop-list/english.stop
 DOCS_FILE = PDF_ROOT + '_db.txt'                        # flat db of dumpable pdfs -- need to save these to keep indexing into features correct
 VOCAB_FILE = PDF_ROOT + '_vocab.json'                   # vocab file to read from/write to disk
-FEATURES_FILE_STEM = PDF_ROOT + '_features'             # features file stem name
+FEATURES_FILE_STEM = PDF_ROOT + '_features'             # features file stem name which we build on when saving different kinds of features
 FEATURES_FILE_LOAD = PDF_ROOT + '_features_tf_idf.mtx'  # actual features to load
 GRAPH_FILE = PDF_ROOT + '_graph.net'                    # graph file to write
 N_REDUCE_FEATURES = 100                                 # dimensionality of reduced features
-WEIGHT_THRESH = 0.75                                    # thresh for writing out an edge in threshold output function
-KNN_K = 2                                               # how many edges (k) should we write out in knn output function
+WEIGHT_THRESH = 0.75                                    # threshold for including an edge in threshold graph function
+KNN_K = 3                                               # how many edges (k) should we include out per node in knn graph function
 
 if __name__ == '__main__':
 
@@ -85,11 +85,10 @@ if __name__ == '__main__':
     print 'Reducing features to %d dimensions...\n' % (N_REDUCE_FEATURES)
     features = nlpfuns.ReduceFeatures(features, N_REDUCE_FEATURES)
     
-    print 'Computing inter-document distance...\n'
+    print 'Creating graph and writing to pajek file...'
     distances = distance.pdist(features, 'cosine')
     distances = distance.squareform(distances)
-    
-    print 'Creating graph and writing to pajek file...'
+    #graph = nlpfuns.CreateGraphThresh(docs, 1-distances, WEIGHT_THRESH)
     graph = nlpfuns.CreateGraphKNN(docs, 1-distances, KNN_K)
     graph = nlpfuns.ReduceGraphUndirected(graph)
     # list comprehension in second arg just gets filename off the path
