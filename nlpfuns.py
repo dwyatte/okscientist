@@ -121,46 +121,54 @@ def ReduceFeatures(features, dimensions):
 ##########################################################################################
 # Graph logic (Pajek output, etc.)
 ##########################################################################################
+    
+''' Create a graph, which is just a dict of dicts of the form {node_i : {node_j1: weight_j1; node_j2: weight_j2; ...}}
+    thresh specifies the threshold that the weight needs to surpass to get added to the graph. '''
+def CreateGraphThresh(nodes, weights, thresh=0.0):
+    graph = {}
+    for sndnodeid in range(len(nodes)):
+        rcvdict = {}
+        for rcvnodeid in range(len(nodes)):            
+            if sndnodeid != rcvnodeid and weights[sndnodeid,rcvnodeid] > thresh: # no self edges, must exceed thresh
+                rcvdict[str(rcvnodeid)] = weights[sndnodeid,rcvnodeid]
+        graph[str(sndnodeid)] = rcvdict
+    return graph
+    
+''' Create a graph, which is just a dict of dicts of the form {node_i : {node_j1: weight_j1; node_j2: weight_j2; ...}}
+    k specifies value to use in a knn search over similarities '''
+def CreateGraphKNN(nodes, weights, k):
+    graph = {}
+    for sndnodeid in range(len(nodes)):
+        rcvdict = {}
+        # sort the weights and used the sorted indices to get the nearest k nodes
+        weightssortidxs = numpy.argsort(1-weights[sndnodeid]) # 1-weights to turn them into ascending distances
+        kweightsidxs = weightssortidxs[1:1+k] # start at 1 because 0 will always be same paper (most similar to self)
+        for kweightidx in kweightsidxs:
+            rcvdict[str(kweightidx)] = weights[sndnodeid,kweightidx]
+        graph[str(sndnodeid)] = rcvdict
+    return graph
 
-''' Find k nearest neighbor nodes given a weight matrix (i.e., similarities) and a node/nodelist.
-    Should probably assert that k <= # of papers '''
-def FindKNNNodes(k, node, nodelist, weights):
-    # find the node index from the list of nodes
-    nidx = nodelist.index(node)
-    # now sort the weights and used the sorted indices to get the nearest k nodes and their weights
-    weightssortidxs = numpy.argsort(1-weights[nidx]) # 1-weights to turn them into distances
-    return numpy.array(nodelist)[weightssortidxs[1:1+k]] # start at 1 because 0 will always be same paper (most similar to self)
+''' Reduce a directed graph to an undirected one by removing reciprocal connections between nodes '''
+def ReduceGraphUndirected(graph):
+    for sndnodeid in graph.keys():
+        for rcvnodeid in graph[sndnodeid].keys():
+            if sndnodeid in graph[rcvnodeid].keys():
+                del graph[rcvnodeid][sndnodeid]
+    return graph
 
-''' Writes out graph in pajek format. Uses similarities as edge weights, which should
-    be symmetrical, so just write upper right triangle of matrix. Weights is a numpy
-    array. Thresh is a threshold that weight must surpass to get written as an edge '''
-def WriteGraphPajekThresh(netfile, nodes, weights, thresh=0.0):
+''' Writes out graph in pajek format. Begins with *Vertices, which is a nodeid to label mapping,
+    then includes *Edges which is the format sndnode rcvnode weight.'''
+def WriteGraphPajek(netfile, graph, nodelabels):
     with open(netfile, 'w') as f:
         # write node ids
-        f.write('*Vertices ' + str(len(nodes)) + '\n')
-        for nodelabel,nodeid in zip(nodes, range(len(nodes))):
+        f.write('*Vertices ' + str(len(nodelabels)) + '\n')
+        for nodelabel,nodeid in zip(nodelabels, range(len(nodelabels))):
             f.write(str(nodeid+1) + ' ' + '\"' + nodelabel + '\"\n')
 
         # write the weights
         f.write('*Edges\n')    
-        for l1idx in range(len(nodes)):
-            for l2idx in range(l1idx+1, len(nodes)):
-                if weights[l1idx, l2idx] > thresh:
-                    f.write(str(l1idx+1) +  ' ' + str(l2idx+1) + ' ' + str(weights[l1idx, l2idx]) + '\n')
-    return True
-
-''' Writes out graph in pajek format but using knn documents instead '''
-def WriteGraphPajekKNN(netfile, nodes, weights, k):
-    with open(netfile, 'w') as f:
-        # write node ids
-        f.write('*Vertices ' + str(len(nodes)) + '\n')
-        for nodelabel,nodeid in zip(nodes, range(len(nodes))):
-            f.write(str(nodeid+1) + ' ' + '\"' + nodelabel + '\"\n')
-
-        # write the weights
-        f.write('*Edges\n')    
-        for l1idx in range(len(nodes)):
-            knodes = FindKNNNodes(k, nodes[l1idx], nodes, weights)            
-            for knode in knodes:
-                f.write(str(l1idx+1) +  ' ' + str(nodes.index(knode)+1) + ' ' + str(weights[l1idx,nodes.index(knode)]) + '\n')
-    return True
+        for sndnodeid in graph.keys():
+            for rcvnodeid in graph[sndnodeid].keys():
+                # need to cast to int, make 1-based and cast back to str
+                f.write(str(int(sndnodeid)+1) + ' ' + str(int(rcvnodeid)+1) + ' ' + str(graph[sndnodeid][rcvnodeid]) + '\n')
+        return True

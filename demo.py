@@ -4,18 +4,7 @@ import numpy
 import scipy.sparse as sparse
 import scipy.spatial.distance as distance
 
-# * there is probably some sort of bug where docs that got skipped over are getting written out to graph.
-#   might need to actually blacklist them or write out a doc db
-# * try N threshold, write out top N most similar papers -- requires lots more logic though...
-#   - need full distance matrix so that we don't get degenerate cases at bottom-right triangle
-#   - save all nodes/weights in a dict of dicts {nodesnd : {nodercv : wt; nodercv : wt; ...} }?
-#   - then need to filter out symmetric edges 
-# for nodercv in dict[nodesnd].keys()
-#    if nodercv in dict and dict[nodesnd][key] == dict[nodercv][key]:
-#       remove?
-#
-# try gensim version
-
+# TODO: try gensim version
 
 # various flags/parameters
 LOAD_VOCAB = True                                       # whether to build vocab (slow) or read from disk
@@ -30,7 +19,7 @@ FEATURES_FILE_LOAD = PDF_ROOT + '_features_tf_idf.mtx'  # actual features to loa
 GRAPH_FILE = PDF_ROOT + '_graph.net'                    # graph file to write
 N_REDUCE_FEATURES = 100                                 # dimensionality of reduced features
 WEIGHT_THRESH = 0.75                                    # thresh for writing out an edge in threshold output function
-KNN_K = 5                                               # how many edges (k) should we write out in knn output function
+KNN_K = 2                                               # how many edges (k) should we write out in knn output function
 
 if __name__ == '__main__':
 
@@ -100,8 +89,10 @@ if __name__ == '__main__':
     distances = distance.pdist(features, 'cosine')
     distances = distance.squareform(distances)
     
-    print 'Writing Pajek graph file...'
+    print 'Creating graph and writing to pajek file...'
+    graph = nlpfuns.CreateGraphKNN(docs, 1-distances, KNN_K)
+    graph = nlpfuns.ReduceGraphUndirected(graph)
     # list comprehension in second arg just gets filename off the path
-    nlpfuns.WriteGraphPajekKNN(GRAPH_FILE, [x.split(os.sep)[-1] for x in docs], 1-distances, KNN_K)
+    nlpfuns.WriteGraphPajek(GRAPH_FILE, graph, [x.split(os.sep)[-1] for x in docs])
 
-    print 'Done. (elapsed time %f secs)' % (time.time() - starttime)
+    print 'Done. (elapsed time %f secs)\n' % (time.time() - starttime)
