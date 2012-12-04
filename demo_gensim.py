@@ -1,12 +1,17 @@
 import gensim.corpora as corpora
 import gensim.models as models
-import nlpfuns
+import gensim.similarities as similarities
+import scipy.sparse as sparse
+import numpy
 import sys, os, time, logging
+import nlpfuns
 
-PDF_ROOT = 'allpdfs'                                    # where to search for PDFs
+PDF_ROOT = 'testpdfs'                                   # where to search for PDFs
 STOP_FILE = 'stoplist.txt'                              # http://jmlr.csail.mit.edu/papers/volume5/lewis04a/a11-smart-stop-list/english.stop
-DOCS_FILE = PDF_ROOT + '_db.txt'                        # flat db of dumpable pdfs -- need to save these to keep indexing into features corr
-NUM_TOPICS = 100
+GRAPH_FILE = PDF_ROOT + '_gensim_graph.net'             # graph file to write
+NUM_TOPICS = 100                                        # dimensionality for lsi/lda model
+WEIGHT_THRESH = 0.75                                    # threshold for including an edge in threshold graph function
+KNN_K = 3                                               # how many edges (k) should we include out per node in knn graph function
 
 if __name__ == '__main__':
 
@@ -22,8 +27,8 @@ if __name__ == '__main__':
     docs = nlpfuns.FindPDFs(PDF_ROOT)
     stoplist = nlpfuns.ReadFlatText(STOP_FILE)
     docsrm = []    
-    dictionary = corpora.Dictionary() 
-    corpus = []
+    dictionary = corpora.Dictionary() # a mapping of words to word-ids that gets updated for each new doc
+    corpus = [] # bag of words representation using the dictionary for each doc
     
     for doc,didx in zip(docs, range(len(docs))):
         print 'Adding text from %s (%d/%d)' % (doc, didx+1, len(docs))
@@ -40,9 +45,22 @@ if __name__ == '__main__':
     print '\nDone.'
             
     # extract tf-idf features from corpus object and create lsi model
-    print '\nBuilding models...'
+    print '\nBuilding LSI model...'
+    # tf-idf model
     tfidf = models.TfidfModel(corpus)
-    corpus_tfidf = tfidf[corpus]
-    # create the lsi model
+    corpus_tfidf = tfidf[corpus]        
+    # lsi model
     lsi = models.LsiModel(corpus_tfidf, id2word=dictionary, num_topics=NUM_TOPICS)
-    lda = models.LdaModel(corpus, id2word=dictionary, num_topics=NUM_TOPICS)
+    corpus_tfidf_lsi = lsi[corpus_tfidf]
+    
+    print 'Creating graph and writing to pajek file...'
+    # similarities -- just do them all in memory, but gensim author notes that this won't 
+    # scale for very large document libraries
+    corpus_tfidf_lsi_index = similarities.SparseMatrixSimilarity(corpus_tfidf_lsi, num_features=NUM_TOPICS)
+    similarities = numpy.zeros((len(docs), len(docs)))
+    for similarity,sidx in zip(corpus_tfidf_lsi_index, range(len(corpus_tfidf_lsi_index))):
+        similarities[sidx,:] = numpy.array(similarity)
+    graph = nlpfuns.CreateGraphThresh(docs, similarities, WEIGHT_THRESH)
+    nlpfuns.WriteGraphPajek(GRAPH_FILE, graph, [x.split(os.sep)[-1] for x in docs])
+    
+    print 'Done. (elapsed time %f secs)\n' % (time.time() - starttime)
