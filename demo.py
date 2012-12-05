@@ -18,7 +18,7 @@ FEATURES_FILE_STEM = PDF_ROOT + '_features'             # features file stem nam
 FEATURES_FILE_LOAD = PDF_ROOT + '_features_tf_idf.mtx'  # actual features to load
 GRAPH_FILE = PDF_ROOT + '_graph.net'                    # graph file to write
 N_REDUCE_FEATURES = 100                                 # dimensionality of reduced features
-WEIGHT_THRESH = 0.75                                    # threshold for including an edge in threshold graph function
+WEIGHT_THRESH = 0.5                                     # threshold for including an edge in threshold graph function
 KNN_K = 3                                               # how many edges (k) should we include out per node in knn graph function
 
 if __name__ == '__main__':
@@ -78,7 +78,7 @@ if __name__ == '__main__':
 
         # convert features to tf-idf (convert features to more efficient sparse matrix type for math ops)
         print 'Computing TF-IDF features...'        
-        features = nlpfuns.ComputeTFIDFFeatures(features.tocsr(), vocab)
+        features = nlpfuns.ComputeTFIDFFeatures(features, vocab)
         print 'Done. Writing TF-IDF features to %s\n' % (FEATURES_FILE_STEM + '_tf_idf.mtx')
         nlpfuns.WriteMTX(FEATURES_FILE_STEM + '_tf_idf.mtx', features)
 

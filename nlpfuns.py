@@ -102,22 +102,24 @@ def ComputeFreqFeatures(words, vocab):
     All math in this function is done on numpy arrays (sparse when possible) for efficiency reasons (no dicts) '''
 def ComputeTFIDFFeatures(freqs, vocab):
     # compute inverse document frequency
+    freqs = freqs.tocsr() # csr matrix allows for faster math
     IDF = numpy.zeros(len(vocab))
     for widx in range(0, len(vocab)):
-        IDF[widx] = numpy.log2(freqs.shape[0] / float(1+len(freqs[:,widx].nonzero())))
-
+        IDF[widx] = numpy.log2(freqs.shape[0] / float(1+len(freqs[:,widx].nonzero()[0])))
+    # as a hack, diagonalize IDF to allow for element-wise matrix multiplication in sparse mode
+    IDF = sparse.diags(IDF,0).tocsr() # csr matrix allows for faster math
+        
     # now do TF * IDF
     TF_IDF = sparse.lil_matrix(freqs.shape)
     for didx in range(0, freqs.shape[0]):
-        # have to convert sparse array out to dense array for element-wise multiplication (boo...)
-        TF_IDF[didx,:] = numpy.multiply(freqs[didx,:].todense(), IDF)
+        TF_IDF[didx,:] = freqs[didx,:] * IDF # IDF is a sparse diagonal matrix
     return TF_IDF
 
 ''' Reduce features with dimensionality reduction. Currently only SVD is supported for efficiency '''
 def ReduceFeatures(features, dimensions):
     assert dimensions < features.shape[0], 'Reduced feature dimensionality must be less than #observations'
     [U, S, V] = linalg.svds(features, dimensions)
-    return U*S
+    return U
 
 ##########################################################################################
 # Graph logic (Pajek output, etc.)
