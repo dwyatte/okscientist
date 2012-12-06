@@ -85,7 +85,7 @@ if __name__ == '__main__':
     print 'Reducing features to %d dimensions...\n' % (N_REDUCE_FEATURES)
     features = nlpfuns.ReduceFeatures(features, N_REDUCE_FEATURES)
     
-    print 'Creating graph and writing to pajek file...'
+    print 'Creating graph and writing to Pajek file...'
     distances = distance.pdist(features, 'cosine')
     distances = distance.squareform(distances)
     #graph = nlpfuns.CreateGraphThresh(docs, 1-distances, WEIGHT_THRESH)

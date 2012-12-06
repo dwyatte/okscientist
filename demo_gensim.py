@@ -10,7 +10,7 @@ PDF_ROOT = 'allpdfs'                                    # where to search for PD
 STOP_FILE = 'stoplist.txt'                              # http://jmlr.csail.mit.edu/papers/volume5/lewis04a/a11-smart-stop-list/english.stop
 GRAPH_FILE = PDF_ROOT + '_gensim_graph.net'             # graph file to write
 NUM_TOPICS = 100                                        # dimensionality for lsi/lda model
-WEIGHT_THRESH = 0.5                                     # threshold for including an edge in threshold graph function
+WEIGHT_THRESH = 0.75                                    # threshold for including an edge in threshold graph function
 KNN_K = 5                                               # how many edges (k) should we include out per node in knn graph function
 
 if __name__ == '__main__':
@@ -47,25 +47,25 @@ if __name__ == '__main__':
     print 'Done.'
             
     # extract tf-idf features from corpus object and create lsi model
-    print '\nBuilding LSI model...'
+    print '\nBuilding models...'
     # tf-idf model
     tfidf = models.TfidfModel(corpus)
     corpus_tfidf = tfidf[corpus]        
     # lsi model
-    lsi = models.LsiModel(corpus_tfidf, id2word=dictionary, num_topics=NUM_TOPICS)
-    corpus_tfidf_lsi = lsi[corpus_tfidf]
-    corpus_tfidf_lsi_index = similarities.SparseMatrixSimilarity(corpus_tfidf_lsi, num_features=NUM_TOPICS)
+    # lsi = models.LsiModel(corpus_tfidf, id2word=dictionary, num_topics=NUM_TOPICS)
+    # corpus_tfidf_lsi = lsi[corpus_tfidf]
+    # corpus_tfidf_lsi_index = similarities.SparseMatrixSimilarity(corpus_tfidf_lsi, num_features=NUM_TOPICS)
     # lda model
-    lda = models.LdaModel(corpus, id2word=dictionary, num_topics=NUM_TOPICS)
-    corpus_lda = lda[corpus]
-    corpus_lda_index = similarities.SparseMatrixSimilarity(corpus_lda, num_features=NUM_TOPICS)
+    lda = models.LdaModel(corpus_tfidf, id2word=dictionary, num_topics=NUM_TOPICS)
+    corpus_tfidf_lda = lda[corpus_tfidf]
+    corpus_tfidf_lda_index = similarities.SparseMatrixSimilarity(corpus_tfidf_lda, num_features=NUM_TOPICS)
     
-    print 'Creating graph and writing to pajek file...'
+    print 'Creating graph and writing to Pajek file...'
     # similarities -- just do them all in memory, but gensim author notes that this won't 
     # scale for very large document libraries (1mil+)
 
     similarities = numpy.zeros((len(docs), len(docs)))
-    for similarity,sidx in zip(corpus_lda_index, range(len(corpus_lda_index))):
+    for similarity,sidx in zip(corpus_tfidf_lda_index, range(len(corpus_tfidf_lda_index))):
         similarities[sidx,:] = numpy.array(similarity)
 
     graph = nlpfuns.CreateGraphThresh(docs, similarities, WEIGHT_THRESH)
