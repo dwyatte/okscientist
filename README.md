@@ -15,7 +15,7 @@ cd ..
 
 2.) Install gensim. The easiest way to do this is with python's easy_install tool. If you are
 using Mac OS 10.8.X, there is a known bug with the Scipy/Numpy (as of 12/2012) where dependency
-checking doesn't work quite properly. The easiest way is to run the install_3rdparty.sh script.
+checking doesn't work quite properly. The easiest way is to run the install_3rdparty.sh script
 included in the deps directory.  
 cd deps  
 ./install_3rdparty.sh  
@@ -45,4 +45,4 @@ instead of the implementation in nlpfuns.py. Run 'python demo_gensim.py' for thi
 Analysis:
 ----
 The code writes out undirected Pajek formatted graph files (.net extension), which can be 
-analyzed using a variety of software packages e.g., gephi (https://gephi.org/)
+analyzed using a variety of software packages, e.g., gephi (https://gephi.org/).
