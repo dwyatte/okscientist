@@ -8,7 +8,7 @@ import nlpfuns
 
 PDF_ROOT = 'allpdfs'                                    # where to search for PDFs
 STOP_FILE = 'stoplist.txt'                              # http://jmlr.csail.mit.edu/papers/volume5/lewis04a/a11-smart-stop-list/english.stop
-GRAPH_FILE = PDF_ROOT + '_gensim_graph.net'             # graph file to write
+GRAPH_STEM = PDF_ROOT + '_gensim_lda_graph'             # stem of graph file to write
 NUM_TOPICS = 100                                        # dimensionality for lsi/lda model
 WEIGHT_THRESH = 0.75                                    # threshold for including an edge in threshold graph function
 KNN_K = 5                                               # how many edges (k) should we include out per node in knn graph function
@@ -51,7 +51,7 @@ if __name__ == '__main__':
     # tf-idf model
     tfidf = models.TfidfModel(corpus)
     corpus_tfidf = tfidf[corpus]        
-    # lsi model
+    # # lsi model
     # lsi = models.LsiModel(corpus_tfidf, id2word=dictionary, num_topics=NUM_TOPICS)
     # corpus_tfidf_lsi = lsi[corpus_tfidf]
     # corpus_tfidf_lsi_index = similarities.SparseMatrixSimilarity(corpus_tfidf_lsi, num_features=NUM_TOPICS)
@@ -60,7 +60,7 @@ if __name__ == '__main__':
     corpus_tfidf_lda = lda[corpus_tfidf]
     corpus_tfidf_lda_index = similarities.SparseMatrixSimilarity(corpus_tfidf_lda, num_features=NUM_TOPICS)
     
-    print 'Creating graph and writing to Pajek file...'
+    print 'Creating graphs and writing to Pajek file...'
     # similarities -- just do them all in memory, but gensim author notes that this won't 
     # scale for very large document libraries (1mil+)
 
@@ -68,9 +68,14 @@ if __name__ == '__main__':
     for similarity,sidx in zip(corpus_tfidf_lda_index, range(len(corpus_tfidf_lda_index))):
         similarities[sidx,:] = numpy.array(similarity)
 
-    graph = nlpfuns.CreateGraphThresh(docs, similarities, WEIGHT_THRESH)
-    #graph = nlpfuns.CreateGraphKNN(docs, similarities, KNN_K)
-    graph = nlpfuns.ReduceGraphUndirected(graph)
-    nlpfuns.WriteGraphPajek(GRAPH_FILE, graph, [x.split(os.sep)[-1] for x in docs])
+    graphthresh = nlpfuns.CreateGraphThresh(docs, similarities, WEIGHT_THRESH)
+    graphthresh = nlpfuns.ReduceGraphUndirected(graphthresh)
+    # list comprehension just strips off last part of file path for node label
+    nlpfuns.WriteGraphPajek(GRAPH_STEM+'_thresh'+str(WEIGHT_THRESH)+'.net', graphthresh, [x.split(os.sep)[-1] for x in docs])
+    
+    graphknn = nlpfuns.CreateGraphKNN(docs, similarities, KNN_K)
+    graphknn = nlpfuns.ReduceGraphUndirected(graphknn)
+    # list comprehension just strips off last part of file path for node label
+    nlpfuns.WriteGraphPajek(GRAPH_STEM+'_knn'+str(KNN_K)+'.net', graphknn, [x.split(os.sep)[-1] for x in docs])
     
     print 'Done. (elapsed time %f secs)\n' % (time.time() - starttime)

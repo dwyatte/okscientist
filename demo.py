@@ -4,11 +4,9 @@ import numpy
 import scipy.sparse as sparse
 import scipy.spatial.distance as distance
 
-# TODO: try gensim version
-
 # flags
-LOAD_VOCAB = True                                       # whether to build vocab (slow) or read from disk
-LOAD_FEATURES = True                                    # whether to compute features (slow) or read from disk
+LOAD_VOCAB = False                                      # whether to build vocab (slow) or read from disk
+LOAD_FEATURES = False                                   # whether to compute features (slow) or read from disk
 # parameters
 PDF_ROOT = 'allpdfs'                                    # where to search for PDFs
 STOP_FILE = 'stoplist.txt'                              # http://jmlr.csail.mit.edu/papers/volume5/lewis04a/a11-smart-stop-list/english.stop
@@ -16,10 +14,10 @@ DOCS_FILE = PDF_ROOT + '_db.txt'                        # flat db of dumpable pd
 VOCAB_FILE = PDF_ROOT + '_vocab.json'                   # vocab file to read from/write to disk
 FEATURES_FILE_STEM = PDF_ROOT + '_features'             # features file stem name which we build on when saving different kinds of features
 FEATURES_FILE_LOAD = PDF_ROOT + '_features_tf_idf.mtx'  # actual features to load
-GRAPH_FILE = PDF_ROOT + '_graph.net'                    # graph file to write
+GRAPH_STEM = PDF_ROOT + '_graph'                        # stem of graph file to write
 N_REDUCE_FEATURES = 100                                 # dimensionality of reduced features
 WEIGHT_THRESH = 0.5                                     # threshold for including an edge in threshold graph function
-KNN_K = 3                                               # how many edges (k) should we include out per node in knn graph function
+KNN_K = 5                                               # how many edges (k) should we include out per node in knn graph function
 
 if __name__ == '__main__':
 
@@ -85,13 +83,18 @@ if __name__ == '__main__':
     print 'Reducing features to %d dimensions...\n' % (N_REDUCE_FEATURES)
     features = nlpfuns.ReduceFeatures(features, N_REDUCE_FEATURES)
     
-    print 'Creating graph and writing to Pajek file...'
+    print 'Creating graphs and writing to Pajek file...'
     distances = distance.pdist(features, 'cosine')
     distances = distance.squareform(distances)
-    #graph = nlpfuns.CreateGraphThresh(docs, 1-distances, WEIGHT_THRESH)
-    graph = nlpfuns.CreateGraphKNN(docs, 1-distances, KNN_K)
-    graph = nlpfuns.ReduceGraphUndirected(graph)
-    # list comprehension in second arg just gets filename off the path
-    nlpfuns.WriteGraphPajek(GRAPH_FILE, graph, [x.split(os.sep)[-1] for x in docs])
+    
+    graphthresh = nlpfuns.CreateGraphThresh(docs, 1-distances, WEIGHT_THRESH)
+    graphthresh = nlpfuns.ReduceGraphUndirected(graphthresh)
+    # list comprehension just strips off last part of file path for node label
+    nlpfuns.WriteGraphPajek(GRAPH_STEM+'_thresh'+str(WEIGHT_THRESH)+'.net', graphthresh, [x.split(os.sep)[-1] for x in docs])
+    
+    graphknn = nlpfuns.CreateGraphKNN(docs, 1-distances, KNN_K)
+    graphknn = nlpfuns.ReduceGraphUndirected(graphknn)
+    # list comprehension just strips off last part of file path for node label
+    nlpfuns.WriteGraphPajek(GRAPH_STEM+'_knn'+str(KNN_K)+'.net', graphknn, [x.split(os.sep)[-1] for x in docs])
 
     print 'Done. (elapsed time %f secs)\n' % (time.time() - starttime)
