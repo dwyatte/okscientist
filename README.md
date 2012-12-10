@@ -34,5 +34,15 @@ which will take awhile (around 30 minutes for my library of 1000 PDFs). Fortunat
 saves all of these things to disk, which can then be loaded on subsequent runs by setting the
 flags LOAD_VOCAB and LOAD_FEATURES to True (again, would be better to pass these as arguments).
 
+The code is fairly optimized for memory, and should scale to fairly large libraries. gensim
+includes even better memory optimization as well as online-updating LSI and LDA models (opposed 
+to the implementation here which makes two separate passes for calculating the overall vocabulary
+and then the features) -- see below for more information.
+
 3.) Optional: There is also a demo that uses gensim for the LSI and LDA (default) computations
 instead of the implementation in nlpfuns.py. Run 'python demo_gensim.py' for this version.
+
+Analysis:
+----
+The code writes out undirected Pajek formatted graph files (.net extension), which can be 
+analyzed using a variety of software packages e.g., gephi (https://gephi.org/)
