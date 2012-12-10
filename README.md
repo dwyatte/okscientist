@@ -8,18 +8,18 @@ of a library of PDF documents, which seems a bit orthogonal, but...
 Installation
 ----
 1.) Install Scipy/Numpy if you don't already have it (requires Xcode to be installed on Mac OS).
-The easiest method is to use the install_superpack.sh script included in the deps directory.
-cd deps
-./install_superpack.sh
-cd ..
+The easiest method is to use the install_superpack.sh script included in the deps directory.  
+cd deps  
+./install_superpack.sh  
+cd ..  
 
 2.) Install gensim. The easiest way to do this is with python's easy_install tool. If you are
 using Mac OS 10.8.X, there is a known bug with the Scipy/Numpy (as of 12/2012) where dependency
 checking doesn't work quite properly. The easiest way is to run the install_3rdparty.sh script.
-included in the deps directory.
-cd deps
-./install_3rdparty.sh
-cd ..
+included in the deps directory.  
+cd deps  
+./install_3rdparty.sh  
+cd ..  
 
 3.) Install Xpdf/pdftotext. If you are using Mac OS, we have included a binary in the bin
 directory. If the binary is included somewhere else, make sure it is on your path.
