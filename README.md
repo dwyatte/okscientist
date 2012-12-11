@@ -22,7 +22,8 @@ cd deps
 cd ..  
 
 3.) Install Xpdf/pdftotext. If you are using Mac OS, we have included a binary in the bin
-directory. If the binary is included somewhere else, make sure it is on your path.
+directory that will automatically get added to your path. If the binary is included somewhere
+nonstandard, make sure to manually add it to your path.
 
 Usage:
 ----
