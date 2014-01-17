@@ -1,7 +1,7 @@
 okscienctist
 ====
 okscientist was a project for an informatics class that computed similarities between libraries of documents.
-The ultimate goal of the project was to infer compatibilities between users in terms of their PDF libarry structure
+The ultimate goal of the project was to infer compatibilities between users in terms of their PDF library structure
 in order to identify potential collaborators (think okcupid for scientists, hence "okscientist"). As a cursory goal, 
 it simply visualizes the similarity structure of a library of PDF documents. In theory, the code could be adopted to work 
 with the [Mendeley API](http://dev.mendeley.com/) (or any number of similar services).
